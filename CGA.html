@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CGA — Soil Intelligence for Growers</title>
+<meta name="description" content="CGA turns a soil sample into a clear, actionable CGA Result — pH, nutrients, texture, and a plain-language recommendation for your crop.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 110 110' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='110' height='110' rx='26' fill='%231c4d2b'/%3E%3Cpath d='M40 78 L40 52' stroke='%23a9d4b5' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M40 56 C 40 44, 30 38, 20 37 C 21 49, 29 56, 40 56 Z' fill='%23a9d4b5'/%3E%3Cpath d='M68 78 L68 40' stroke='%23ffffff' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M68 45 C 68 30, 55 22, 42 20 C 43 35, 54 44, 68 45 Z' fill='%237ec090'/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page:           #f4f7f1;
+    --surface-card:   #ffffff;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --border:         rgba(11,11,11,0.10);
+    --gridline:       #e1e0d9;
+
+    --series-1: #2a78d6; /* blue */
+    --series-2: #eb6834; /* orange */
+    --series-3: #1baf7a; /* aqua */
+    --series-4: #eda100; /* yellow */
+    --series-5: #4a3aa7; /* violet */
+
+    --seq-100: #cde2fb;
+    --seq-250: #86b6ef;
+    --seq-400: #3987e5;
+    --seq-450: #2a78d6;
+    --seq-550: #1c5cab;
+
+    --good: #0ca30c;
+    --warning: #fab219;
+    --serious: #ec835a;
+    --critical: #d03b3b;
+
+    --brand-green-dark: #1c4d2b;
+    --brand-green: #2f7d46;
+    --brand-green-light: #eaf4ec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page:           #0d0d0d;
+      --surface-card:   #232322;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --border:         rgba(255,255,255,0.10);
+      --gridline:       #2c2c2a;
+
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --series-3: #199e70;
+      --series-4: #c98500;
+      --series-5: #9085e9;
+
+      --seq-100: #184f95;
+      --seq-250: #1c5cab;
+      --seq-400: #256abf;
+      --seq-450: #2a78d6;
+      --seq-550: #5598e7;
+
+      --good: #0ca30c;
+      --warning: #fab219;
+      --serious: #ec835a;
+      --critical: #e66767;
+
+      --brand-green-dark: #eaf4ec;
+      --brand-green: #4fae6c;
+      --brand-green-light: #16261a;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+  .view { display: none; min-height: 100vh; }
+  .view.active { display: block; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select { font-family: inherit; }
+  a { color: inherit; }
+
+  /* ---------- Cover / landing page ---------- */
+  .cover-nav {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px; background: var(--surface-card);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap; gap: 12px;
+  }
+  .cover-nav-links { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+  .nav-link { background: none; border: none; color: var(--text-secondary); font-size: 14px; font-weight: 600; padding: 0; }
+  .nav-link:hover { color: var(--text-primary); }
+  .cover-nav .btn { padding: 10px 18px; font-size: 14px; }
+
+  .cover-hero {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 12% 15%, rgba(47,125,70,0.16), transparent 42%),
+      radial-gradient(circle at 88% 12%, rgba(42,120,214,0.12), transparent 40%),
+      radial-gradient(circle at 75% 88%, rgba(237,161,0,0.10), transparent 45%),
+      linear-gradient(180deg, var(--brand-green-light) 0%, var(--page) 65%);
+    padding: 88px 32px 100px;
+  }
+  .cover-blob {
+    position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.55;
+    pointer-events: none; z-index: 0;
+    animation: blob-float 14s ease-in-out infinite;
+  }
+  .cover-blob-1 { width: 320px; height: 320px; top: -120px; left: -80px; background: rgba(47,125,70,0.22); }
+  .cover-blob-2 { width: 260px; height: 260px; bottom: -100px; right: -60px; background: rgba(42,120,214,0.18); animation-delay: -6s; }
+  @keyframes blob-float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(24px, -18px) scale(1.08); }
+  }
+  .cover-wave { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 64px; z-index: 1; }
+  .cover-wave path { fill: var(--page); }
+
+  .cover-hero-inner {
+    position: relative; z-index: 2;
+    max-width: 1080px; margin: 0 auto;
+    display: flex; align-items: center; gap: 48px; flex-wrap: wrap;
+  }
+  .cover-hero-text { flex: 1 1 420px; min-width: 280px; text-align: left; }
+  .cover-eyebrow {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--surface-card); border: 1px solid var(--border);
+    color: var(--brand-green); font-size: 12.5px; font-weight: 700;
+    padding: 7px 14px; border-radius: 999px; margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  .cover-headline { font-size: 36px; line-height: 1.32; font-weight: 700; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .cover-headline .accent { color: var(--brand-green); }
+  .cover-sub { font-size: 16px; color: var(--text-secondary); line-height: 1.6; margin: 0 0 28px; max-width: 480px; }
+  .cover-cta-row { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+  .cover-cta-row .btn-primary { padding: 15px 28px; font-size: 16px; box-shadow: 0 10px 24px rgba(47,125,70,0.28); }
+  .cover-trust { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--text-muted); flex-wrap: wrap; }
+  .cover-trust .dot-sep { opacity: 0.6; }
+
+  .cover-hero-visual { position: relative; flex: 1 1 320px; min-width: 260px; min-height: 300px; display: flex; align-items: center; justify-content: center; }
+  .peek-card {
+    position: absolute; width: 260px; border-radius: 18px;
+    background: var(--surface-card); border: 1px solid var(--border);
+    box-shadow: 0 24px 48px rgba(11,11,11,0.14);
+    padding: 22px 22px 20px;
+  }
+  .peek-card-back {
+    background: linear-gradient(135deg, var(--brand-green-dark), #14361f 70%);
+    transform: rotate(6deg) translate(18px, 22px);
+    height: 240px;
+    opacity: 0.9;
+  }
+  .peek-card-front { transform: rotate(-4deg); }
+  .peek-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .peek-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--text-muted); text-transform: uppercase; }
+  .peek-badge { font-size: 11px; font-weight: 700; color: var(--good); }
+  .peek-score { font-size: 44px; font-weight: 700; color: var(--text-primary); line-height: 1; margin-bottom: 16px; }
+  .peek-bars { display: grid; gap: 10px; }
+  .peek-bar { display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 10px; }
+  .peek-bar span { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+  .peek-bar-track { height: 7px; border-radius: 999px; background: var(--seq-100); overflow: hidden; }
+  .peek-bar-fill { height: 100%; border-radius: 999px; }
+
+  .cover-section { position: relative; padding: 72px 24px; max-width: 1040px; margin: 0 auto; }
+  .cover-section-title { text-align: center; font-size: 26px; font-weight: 700; margin: 0 0 12px; }
+  .cover-section-sub { text-align: center; font-size: 14.5px; color: var(--text-secondary); margin: 0 0 44px; }
+
+  .how-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+  .how-step {
+    text-align: center; padding: 32px 22px;
+    background: var(--surface-card); border: 1px solid var(--border); border-radius: 18px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .how-step:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(11,11,11,0.08); }
+  .how-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: 50%;
+    font-weight: 700; font-size: 17px; margin-bottom: 16px;
+    color: #fff;
+  }
+  .how-step:nth-child(1) .how-num { background: linear-gradient(135deg, var(--brand-green), var(--brand-green-dark)); }
+  .how-step:nth-child(2) .how-num { background: linear-gradient(135deg, var(--seq-450), var(--seq-550)); }
+  .how-step:nth-child(3) .how-num { background: linear-gradient(135deg, var(--series-4), #c98500); }
+  .how-step h3 { font-size: 16px; margin: 0 0 8px; }
+  .how-step p { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; margin: 0; }
+
+  .preview-window {
+    background: var(--surface-card); border: 1px solid var(--border);
+    border-radius: 20px; box-shadow: 0 30px 60px rgba(11,11,11,0.10);
+    overflow: hidden;
+  }
+  .preview-window-bar { display: flex; align-items: center; gap: 7px; padding: 14px 18px; background: var(--surface-1); border-bottom: 1px solid var(--border); }
+  .preview-window-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .preview-window-dot:nth-child(1) { background: #ec6a5e; }
+  .preview-window-dot:nth-child(2) { background: #f4bf4f; }
+  .preview-window-dot:nth-child(3) { background: #61c454; }
+  .preview-body { padding: 24px; }
+  .preview-hero-mini {
+    background: linear-gradient(135deg, var(--brand-green-dark), #14361f 70%);
+    color: #fff; border-radius: 14px; padding: 18px 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 18px;
+  }
+  .preview-hero-mini .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.8; margin-bottom: 4px; }
+  .preview-hero-mini .score { font-size: 32px; font-weight: 700; line-height: 1; }
+  .preview-hero-mini .meta { font-size: 12px; opacity: 0.85; text-align: right; line-height: 1.5; }
+  .preview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+  .preview-micro-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .preview-micro-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-primary); background: var(--surface-card); border: 1px solid var(--border); border-radius: 999px; padding: 5px 10px 5px 8px; }
+  .preview-micro-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .preview-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px; padding: 22px; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .preview-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(11,11,11,0.08); }
+  .preview-card h4 { font-size: 13.5px; margin: 0 0 14px; color: var(--text-secondary); font-weight: 600; }
+  .preview-ph-track { position: relative; height: 10px; border-radius: 999px; background: var(--gridline); margin-bottom: 8px; }
+  .preview-ph-zone { position: absolute; top: 0; bottom: 0; left: 42%; width: 15%; background: rgba(47,125,70,0.28); border-radius: 999px; }
+  .preview-ph-dot { position: absolute; top: -3px; left: 46%; width: 16px; height: 16px; border-radius: 50%; background: var(--brand-green); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+  .preview-ph-labels { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-muted); }
+  .preview-bar-row { margin-bottom: 12px; }
+  .preview-bar-row:last-child { margin-bottom: 0; }
+  .preview-bar-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; color: var(--text-primary); font-weight: 600; }
+  .preview-bar-track { height: 8px; border-radius: 999px; background: var(--seq-100); overflow: hidden; }
+  .preview-bar-fill { height: 100%; background: var(--seq-450); border-radius: 999px; }
+  .preview-texture-bar { display: flex; height: 22px; border-radius: 7px; overflow: hidden; }
+  .preview-texture-bar div { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; }
+  .preview-texture-bar div + div { margin-left: 2px; }
+
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 8px; }
+  .feature-card { background: var(--surface-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px 20px; text-align: left; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .feature-card:hover { transform: translateY(-3px); box-shadow: 0 14px 28px rgba(11,11,11,0.08); }
+  .feature-icon { font-size: 26px; display: block; margin-bottom: 12px; }
+  .feature-card h3 { font-size: 15px; margin: 0 0 6px; }
+  .feature-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0; }
+
+  .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; max-width: 760px; margin: 0 auto; }
+  .pricing-card { background: var(--surface-card); border: 1px solid var(--border); border-radius: 18px; padding: 32px 28px; text-align: left; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .pricing-card:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(11,11,11,0.08); }
+  .pricing-card-active { border-color: var(--brand-green); box-shadow: 0 16px 32px rgba(47,125,70,0.12); }
+  .pricing-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--brand-green); background: var(--brand-green-light); padding: 4px 10px; border-radius: 999px; margin-bottom: 14px; }
+  .pricing-badge-soon { color: var(--text-muted); background: var(--surface-1); }
+  .pricing-card h3 { font-size: 20px; margin: 0 0 6px; }
+  .pricing-price { font-size: 34px; font-weight: 700; margin-bottom: 18px; }
+  .pricing-price span { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+  .pricing-list { list-style: none; margin: 0 0 24px; padding: 0; display: grid; gap: 10px; }
+  .pricing-list li { font-size: 13.5px; color: var(--text-secondary); padding-left: 22px; position: relative; line-height: 1.5; }
+  .pricing-list li::before { content: "✓"; position: absolute; left: 0; top: 0; color: var(--brand-green); font-weight: 700; }
+
+  .legal-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .legal-tab { background: var(--surface-1); border: 1px solid var(--border); color: var(--text-secondary); font-size: 12.5px; font-weight: 600; padding: 7px 14px; border-radius: 999px; }
+  .legal-tab:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+
+  .consent-text { font-size: 11.5px; color: var(--text-muted); text-align: center; margin-top: 14px; line-height: 1.5; }
+  .link-inline { background: none; border: none; padding: 0; font: inherit; color: var(--series-1); font-weight: 600; text-decoration: underline; cursor: pointer; }
+
+  .cover-cta-band { max-width: 1040px; margin: 0 auto 80px; padding: 0 24px; }
+  .cover-cta-card {
+    background: linear-gradient(135deg, var(--brand-green-dark), #14361f 70%);
+    border-radius: 22px; padding: 48px 40px; text-align: center; color: #fff;
+  }
+  .cover-cta-card h2 { font-size: 24px; margin: 0 0 10px; }
+  .cover-cta-card p { font-size: 14.5px; opacity: 0.85; margin: 0 0 24px; }
+  .cover-cta-card .btn-primary { background: #fff; color: var(--brand-green-dark); box-shadow: none; }
+  .cover-cta-card .btn-primary:hover { opacity: 0.9; }
+
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 780px) {
+    .cover-hero-inner { flex-direction: column; text-align: center; }
+    .cover-hero-text { text-align: center; }
+    .cover-sub { margin-left: auto; margin-right: auto; }
+    .cover-cta-row { justify-content: center; }
+    .cover-trust { justify-content: center; }
+    .cover-hero-visual { margin-top: 24px; }
+  }
+  @media (max-width: 560px) {
+    .cover-headline { font-size: 26px; }
+    .cover-hero { padding: 64px 20px 88px; }
+    .cover-section { padding: 48px 20px; }
+    .peek-card { width: 220px; }
+    .peek-card-back { transform: rotate(6deg) translate(12px, 16px); height: 200px; }
+  }
+
+  /* ---------- Welcome ---------- */
+  #view-welcome.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(47,125,70,0.18), transparent 45%),
+      radial-gradient(circle at 80% 70%, rgba(42,120,214,0.14), transparent 45%),
+      var(--brand-green-dark);
+    padding: 24px;
+  }
+  .welcome-card {
+    max-width: 560px;
+    width: 100%;
+    background: var(--surface-card);
+    border-radius: 20px;
+    padding: 48px 40px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  .logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .logo-row .brand-name {
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.01em;
+  }
+  .brand-icon { display: inline-block; width: 22px; height: 22px; vertical-align: middle; flex-shrink: 0; }
+  .brand-icon-lg { width: 30px; height: 30px; }
+  .brand-icon svg { display: block; width: 100%; height: 100%; }
+  .quote {
+    font-size: 22px;
+    line-height: 1.5;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 8px;
+  }
+  .quote-sub {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0 0 32px;
+  }
+  .welcome-actions { display: flex; flex-direction: column; gap: 12px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 20px;
+    border-radius: 10px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    transition: transform 0.06s ease, opacity 0.15s ease;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--brand-green); color: #ffffff; }
+  .btn-primary:hover { opacity: 0.92; }
+  .btn-secondary { background: transparent; color: var(--brand-green); border: 1.5px solid var(--brand-green); }
+  .btn-secondary:hover { background: var(--brand-green-light); }
+  .btn-block { width: 100%; }
+  .btn-link { background: none; border: none; color: var(--series-1); font-weight: 600; padding: 0; font-size: 14px; }
+
+  /* ---------- Footer ---------- */
+  .site-footer {
+    display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+    gap: 8px; margin-top: 28px; padding: 20px 0 4px; font-size: 12.5px;
+    color: var(--text-muted); text-align: center;
+  }
+  .footer-link { background: none; border: none; color: inherit; font: inherit; padding: 0; text-decoration: none; cursor: pointer; }
+  .footer-link:hover { color: var(--text-secondary); text-decoration: underline; }
+  .footer-sep { opacity: 0.6; }
+  .site-footer-dark { color: rgba(255,255,255,0.65); }
+  .site-footer-dark .footer-link:hover { color: #ffffff; }
+
+  /* ---------- About us ---------- */
+  .welcome-shell { max-width: 560px; width: 100%; }
+  .about-link { display: block; margin: 20px auto 0; color: var(--text-secondary); }
+  .about-link:hover { color: var(--brand-green); }
+  .about-card { text-align: left; max-width: 480px; }
+  .about-h2 { font-size: 14px; margin: 22px 0 8px; color: var(--text-primary); }
+  .about-p { font-size: 13.5px; line-height: 1.7; color: var(--text-secondary); margin: 0; }
+  .about-p a { color: var(--series-1); font-weight: 600; }
+
+  /* ---------- Auth pages ---------- */
+  .auth-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--page);
+    padding: 24px;
+  }
+  .auth-card {
+    max-width: 420px;
+    width: 100%;
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 36px 32px;
+  }
+  .auth-card .logo-row { justify-content: flex-start; margin-bottom: 20px; }
+  .auth-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+  .auth-sub { font-size: 14px; color: var(--text-secondary); margin: 0 0 28px; }
+  .field { margin-bottom: 16px; text-align: left; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 9px;
+    border: 1.5px solid var(--gridline);
+    background: var(--surface-1);
+    color: var(--text-primary);
+    font-size: 14px;
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: var(--series-1);
+  }
+  .field-error { color: var(--critical); font-size: 12px; margin-top: 4px; display: none; }
+  .field-checkbox { margin-bottom: 18px; }
+  .field-checkbox .checkbox-label {
+    display: flex; align-items: flex-start; gap: 9px;
+    font-size: 12.5px; font-weight: 400; color: var(--text-secondary);
+    line-height: 1.5; cursor: pointer; margin-bottom: 0;
+  }
+  .checkbox-label input[type="checkbox"] {
+    width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0;
+    accent-color: var(--brand-green); cursor: pointer;
+  }
+  .field-checkbox.has-error .checkbox-label { color: var(--critical); }
+  .form-footer { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text-secondary); }
+  .back-link { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text-secondary); background: none; border: none; margin-bottom: 18px; padding: 0; }
+  .welcome-card .cover-back { display: flex; margin: 0 0 16px; }
+
+  /* ---------- Onboarding ---------- */
+  .onboard-wrap {
+    min-height: 100vh;
+    background: var(--page);
+    padding: 32px 16px 80px;
+  }
+  .onboard-shell { max-width: 640px; margin: 0 auto; }
+  .onboard-header { text-align: center; margin-bottom: 28px; }
+  .onboard-header h1 { font-size: 24px; margin: 8px 0 6px; }
+  .onboard-header p { color: var(--text-secondary); font-size: 14px; margin: 0; }
+  .progress-track {
+    height: 6px;
+    background: var(--gridline);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .progress-fill { height: 100%; background: var(--brand-green); border-radius: 999px; transition: width 0.25s ease; }
+  .onboard-step { display: none; }
+  .onboard-step.active { display: block; }
+  .step-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+  }
+  .step-card h2 { font-size: 18px; margin: 0 0 4px; }
+  .step-card .step-desc { font-size: 13px; color: var(--text-secondary); margin: 0 0 20px; }
+  .option-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; margin-bottom: 20px; }
+  .option-card {
+    border: 1.5px solid var(--gridline);
+    border-radius: 12px;
+    padding: 16px 14px;
+    text-align: center;
+    background: var(--surface-1);
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .option-card .opt-icon { font-size: 26px; display: block; margin-bottom: 8px; }
+  .option-card .opt-label { font-size: 13px; font-weight: 600; }
+  .option-card .opt-note { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .option-card.selected { border-color: var(--brand-green); background: var(--brand-green-light); }
+  .step-nav { display: flex; justify-content: space-between; margin-top: 24px; gap: 12px; }
+  .step-nav .btn { flex: 1; }
+
+  /* ---------- Live weather panel (onboarding step 3) ---------- */
+  .weather-panel { background: var(--brand-green-light); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; }
+  .weather-panel-head { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--brand-green-dark); margin-bottom: 8px; }
+  .weather-panel-head .btn-link { font-size: 12px; }
+  .weather-status { font-size: 12.5px; color: var(--text-secondary); margin: 0; }
+  .weather-status.weather-error { color: var(--critical); }
+  .weather-readout { display: flex; flex-wrap: wrap; gap: 16px; }
+  .weather-readout .w-item { display: flex; flex-direction: column; gap: 2px; }
+  .weather-readout .w-label { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+  .weather-readout .w-value { font-weight: 700; font-size: 14px; color: var(--text-primary); }
+  .weather-note { font-size: 11.5px; color: var(--text-secondary); margin: 10px 0 0; }
+
+  /* ---------- Dashboard ---------- */
+  .dash-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .dash-user { display: flex; align-items: center; gap: 14px; }
+  .dash-user .greet { font-size: 13px; color: var(--text-secondary); }
+  .dash-body { max-width: 1080px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  .hero-card {
+    background: linear-gradient(135deg, var(--brand-green-dark), #14361f 70%);
+    color: #fff;
+    border-radius: 18px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .hero-card .hero-figure { font-size: 52px; font-weight: 700; line-height: 1; }
+  .hero-card .hero-label { font-size: 13px; opacity: 0.8; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .hero-card .hero-status { font-size: 14px; margin-top: 8px; opacity: 0.9; max-width: 420px; }
+  .hero-meta { font-size: 12px; opacity: 0.75; text-align: right; }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 22px 20px;
+  }
+  .card h3 { margin: 0 0 2px; font-size: 15px; }
+  .card .card-sub { font-size: 12px; color: var(--text-muted); margin: 0 0 18px; }
+
+  .meter-row { margin-bottom: 16px; }
+  .meter-row:last-child { margin-bottom: 0; }
+  .meter-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .meter-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .meter-value { font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+  .meter-track { height: 10px; background: var(--seq-100); border-radius: 999px; overflow: hidden; position: relative; }
+  .meter-fill { height: 100%; background: var(--seq-450); border-radius: 999px 0 0 999px; }
+  .status-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; margin-top: 6px;
+    padding: 2px 8px 2px 6px; border-radius: 999px;
+    background: var(--surface-1); color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+  .ph-gauge-wrap { margin-top: 4px; }
+  .ph-scale { position: relative; height: 34px; }
+  .ph-track { position: absolute; top: 12px; left: 0; right: 0; height: 10px; border-radius: 999px; background: var(--gridline); overflow: hidden; }
+  .ph-optimal-zone { position: absolute; top: 0; bottom: 0; background: rgba(47,125,70,0.28); }
+  .ph-marker {
+    position: absolute; top: 2px; width: 3px; height: 30px;
+    background: var(--text-primary); border-radius: 2px;
+    transform: translateX(-50%);
+  }
+  .ph-marker::after {
+    content: attr(data-val);
+    position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; font-weight: 700; color: var(--text-primary);
+    white-space: nowrap;
+  }
+  .ph-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .ph-caption { font-size: 12px; color: var(--text-secondary); margin-top: 12px; }
+
+  .stat-tile-value { font-size: 40px; font-weight: 700; line-height: 1; margin: 4px 0 6px; }
+  .stat-tile-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+  .stat-tile-note { font-size: 12.5px; color: var(--text-secondary); margin-top: 10px; }
+
+  .texture-bar { display: flex; height: 26px; border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+  .texture-seg { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; }
+  .texture-seg + .texture-seg { margin-left: 2px; }
+  .texture-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--text-secondary); }
+  .texture-legend .lg-item { display: flex; align-items: center; gap: 6px; }
+  .lg-swatch { width: 10px; height: 10px; border-radius: 3px; }
+  .structure-note { margin-top: 14px; font-size: 12.5px; color: var(--text-secondary); background: var(--surface-1); border-radius: 10px; padding: 12px 14px; }
+
+  .tips-card { margin-top: 22px; }
+  .tips-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .tips-list li { display: flex; gap: 10px; font-size: 13.5px; color: var(--text-secondary); align-items: flex-start; }
+  .tips-list .tip-num {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--brand-green-light); color: var(--brand-green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+
+  .rec-card { margin-top: 22px; background: var(--brand-green-light); border-color: transparent; }
+  .rec-card h3 { color: var(--brand-green-dark); }
+  .rec-card p { font-size: 13.5px; color: var(--text-secondary); margin: 0; line-height: 1.6; }
+
+  .section-title { font-size: 16px; font-weight: 700; margin: 30px 0 14px; }
+
+  @media (max-width: 480px) {
+    .welcome-card, .auth-card, .step-card { padding: 26px 20px; }
+    .dash-body { padding: 20px 14px 50px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== GLOBAL NAV (persistent on every page) ===================== -->
+<nav class="cover-nav">
+  <div class="logo-row">
+    <span class="brand-icon"></span>
+    <span class="brand-name">CGA</span>
+  </div>
+  <div class="cover-nav-links">
+    <button class="nav-link" onclick="goHome()">Home</button>
+    <button class="nav-link" onclick="goToSection('features')">Features</button>
+    <button class="nav-link" onclick="goToSection('pricing')">Pricing</button>
+    <button class="nav-link" onclick="showView('about')">About</button>
+    <button class="btn-link" onclick="showView('login')">Log in</button>
+    <button class="btn btn-primary" onclick="showView('welcome')">Get started</button>
+  </div>
+</nav>
+
+<!-- ===================== COVER / LANDING ===================== -->
+<div id="view-cover" class="view active">
+
+  <section class="cover-hero">
+    <div class="cover-blob cover-blob-1"></div>
+    <div class="cover-blob cover-blob-2"></div>
+    <div class="cover-hero-inner">
+      <div class="cover-hero-text">
+        <span class="cover-eyebrow">🌱 Soil intelligence, made simple</span>
+        <h1 class="cover-headline">"Farmers are the backbone of this country — <span class="accent">imagine a healthier, stronger, more adaptable backbone.</span>"</h1>
+        <p class="cover-sub">CGA turns a few minutes of questions about your crop and soil into a clear CGA Result — so you know exactly what your land needs next.</p>
+        <div class="cover-cta-row">
+          <button class="btn btn-primary" onclick="showView('welcome')">Get started — it's free</button>
+          <button class="btn-link" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">See how it works ↓</button>
+        </div>
+        <div class="cover-trust">
+          <span>No credit card needed</span><span class="dot-sep">·</span><span>Results in under 5 minutes</span>
+        </div>
+      </div>
+      <div class="cover-hero-visual">
+        <div class="peek-card peek-card-back"></div>
+        <div class="peek-card peek-card-front">
+          <div class="peek-card-top">
+            <span class="peek-label">CGA Result</span>
+            <span class="peek-badge">● Good</span>
+          </div>
+          <div class="peek-score">78</div>
+          <div class="peek-bars">
+            <div class="peek-bar"><span>N</span><div class="peek-bar-track"><div class="peek-bar-fill" style="width:54%; background:var(--seq-450)"></div></div></div>
+            <div class="peek-bar"><span>P</span><div class="peek-bar-track"><div class="peek-bar-fill" style="width:68%; background:var(--series-3)"></div></div></div>
+            <div class="peek-bar"><span>K</span><div class="peek-bar-track"><div class="peek-bar-fill" style="width:41%; background:var(--series-4)"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <svg class="cover-wave" viewBox="0 0 1440 80" preserveAspectRatio="none"><path d="M0,40 C240,80 480,0 720,20 C960,40 1200,80 1440,40 L1440,80 L0,80 Z"></path></svg>
+  </section>
+
+  <section class="cover-section" id="how-it-works">
+    <h2 class="cover-section-title reveal">How CGA works</h2>
+    <p class="cover-section-sub reveal">Three quick questions, answered once — that's the whole questionnaire.</p>
+    <div class="how-steps">
+      <div class="how-step reveal">
+        <span class="how-num">1</span>
+        <h3>What are you growing?</h3>
+        <p>Leafy greens, grains, or fruiting crops — each has different nitrogen and nutrient needs, so this shapes every reading that follows.</p>
+      </div>
+      <div class="how-step reveal">
+        <span class="how-num">2</span>
+        <h3>What's your soil like?</h3>
+        <p>Texture (sandy, loam, or clay), organic matter, known pH range, and drainage — whatever you already know, no lab required.</p>
+      </div>
+      <div class="how-step reveal">
+        <span class="how-num">3</span>
+        <h3>What's your climate &amp; water?</h3>
+        <p>Rainfall pattern, evapotranspiration, and heat exposure — the conditions your field actually deals with.</p>
+      </div>
+    </div>
+    <p class="cover-section-sub reveal" style="margin-top:36px; margin-bottom:0;">
+      <button class="btn-link" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">See what your CGA Result looks like ↓</button>
+    </p>
+  </section>
+
+  <section class="cover-section" id="features">
+    <h2 class="cover-section-title reveal">Everything your soil can tell you</h2>
+    <p class="cover-section-sub reveal">One questionnaire. A complete picture of your field.</p>
+    <div class="feature-grid">
+      <div class="feature-card reveal">
+        <span class="feature-icon">🧪</span>
+        <h3>Full soil profile</h3>
+        <p>pH, N-P-K, micronutrients, secondary nutrients, organic matter, texture, and CEC — in one place.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">💬</span>
+        <h3>Plain-language guidance</h3>
+        <p>No lab jargon — just what's low, what's fine, and exactly what to do about it.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🌾</span>
+        <h3>Tuned to your crop</h3>
+        <p>Leafy greens, grains, and fruiting crops each get different nitrogen and nutrient targets.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🔁</span>
+        <h3>Built to re-test</h3>
+        <p>Know when to check again, so decisions are based on this season, not guesswork.</p>
+      </div>
+    </div>
+    <p class="cover-section-sub reveal" style="margin-top:44px; margin-bottom:20px;">Here's what your CGA Result looks like:</p>
+    <div class="preview-window reveal">
+      <div class="preview-window-bar">
+        <span class="preview-window-dot"></span>
+        <span class="preview-window-dot"></span>
+        <span class="preview-window-dot"></span>
+      </div>
+      <div class="preview-body">
+        <div class="preview-hero-mini">
+          <div>
+            <div class="label">CGA Result</div>
+            <div class="score">78</div>
+          </div>
+          <div class="meta">Crop: Leafy greens<br>Updated just now</div>
+        </div>
+        <div class="preview-grid">
+          <div class="preview-card">
+            <h4>Soil pH</h4>
+            <div class="preview-ph-track"><div class="preview-ph-zone"></div><div class="preview-ph-dot"></div></div>
+            <div class="preview-ph-labels"><span>0</span><span>7</span><span>14</span></div>
+          </div>
+          <div class="preview-card">
+            <h4>Macronutrients (N-P-K)</h4>
+            <div class="preview-bar-row">
+              <div class="preview-bar-top"><span>Nitrogen</span><span>54%</span></div>
+              <div class="preview-bar-track"><div class="preview-bar-fill" style="width:54%"></div></div>
+            </div>
+            <div class="preview-bar-row">
+              <div class="preview-bar-top"><span>Phosphorus</span><span>68%</span></div>
+              <div class="preview-bar-track"><div class="preview-bar-fill" style="width:68%"></div></div>
+            </div>
+            <div class="preview-bar-row">
+              <div class="preview-bar-top"><span>Potassium</span><span>41%</span></div>
+              <div class="preview-bar-track"><div class="preview-bar-fill" style="width:41%"></div></div>
+            </div>
+          </div>
+          <div class="preview-card">
+            <h4>Micronutrients</h4>
+            <div class="preview-micro-row">
+              <span class="preview-micro-chip"><span class="preview-micro-dot" style="background:var(--series-1)"></span>Fe 74%</span>
+              <span class="preview-micro-chip"><span class="preview-micro-dot" style="background:var(--series-3)"></span>Zn 61%</span>
+              <span class="preview-micro-chip"><span class="preview-micro-dot" style="background:var(--series-4)"></span>Mn 55%</span>
+              <span class="preview-micro-chip"><span class="preview-micro-dot" style="background:var(--series-5)"></span>Cu 68%</span>
+              <span class="preview-micro-chip"><span class="preview-micro-dot" style="background:var(--series-2)"></span>B 47%</span>
+            </div>
+          </div>
+          <div class="preview-card">
+            <h4>Soil texture</h4>
+            <div class="preview-texture-bar">
+              <div style="width:37%; background:var(--series-1);">37%</div>
+              <div style="width:34%; background:var(--series-2);">34%</div>
+              <div style="width:29%; background:var(--series-3);">29%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cover-section" id="pricing">
+    <h2 class="cover-section-title reveal">Simple, honest pricing</h2>
+    <p class="cover-section-sub reveal">Free while we're in early access — no hidden tiers.</p>
+    <div class="pricing-grid">
+      <div class="pricing-card pricing-card-active reveal">
+        <span class="pricing-badge">Early access</span>
+        <h3>Grower</h3>
+        <div class="pricing-price">$0<span>/month</span></div>
+        <ul class="pricing-list">
+          <li>Unlimited CGA Results for one field</li>
+          <li>Full soil profile: pH, N-P-K, micronutrients, texture, CEC</li>
+          <li>Plain-language recommendations</li>
+          <li>Email support</li>
+        </ul>
+        <button class="btn btn-primary btn-block" onclick="showView('welcome')">Get started free</button>
+      </div>
+      <div class="pricing-card reveal">
+        <span class="pricing-badge pricing-badge-soon">Coming soon</span>
+        <h3>Cooperative</h3>
+        <div class="pricing-price">Custom</div>
+        <ul class="pricing-list">
+          <li>Multiple fields and growers under one account</li>
+          <li>Shared dashboards for co-ops and extension officers</li>
+          <li>Priority support</li>
+        </ul>
+        <a class="btn btn-secondary btn-block" href="mailto:hello@cga.app">Contact us</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="cover-cta-band">
+    <div class="cover-cta-card reveal">
+      <h2>Ready to see what your soil needs?</h2>
+      <p>Free to start — no card, no commitment, just a clearer picture of your field.</p>
+      <button class="btn btn-primary" onclick="showView('welcome')">Get started — it's free</button>
+    </div>
+  </div>
+
+  <div class="site-footer">
+    <span>&copy; 2026 CGA.</span>
+    <button class="footer-link" onclick="showView('about')">About us</button>
+    <span class="footer-sep">·</span>
+    <button class="footer-link" onclick="showView('legal')">Privacy &amp; Terms</button>
+    <span class="footer-sep">·</span>
+    <a class="footer-link" href="mailto:hello@cga.app">hello@cga.app</a>
+  </div>
+</div>
+
+<!-- ===================== WELCOME ===================== -->
+<div id="view-welcome" class="view">
+  <div class="welcome-shell">
+    <div class="welcome-card">
+      <button class="back-link cover-back" onclick="showView('cover')">&larr; Back to home</button>
+      <div class="logo-row">
+        <span class="brand-icon brand-icon-lg"></span>
+        <span class="brand-name">CGA</span>
+      </div>
+      <p class="quote">"Farmers are the backbone of this country —<br>imagine a healthier, stronger, more adaptable backbone."</p>
+      <p class="quote-sub">Real-time soil intelligence for growers who can't afford to guess.</p>
+      <div class="welcome-actions">
+        <button class="btn btn-primary btn-block" onclick="showView('signup')">Create account</button>
+        <button class="btn btn-secondary btn-block" onclick="showView('login')">Sign in / Log in</button>
+      </div>
+      <button class="btn-link about-link" onclick="showView('about')">About us</button>
+    </div>
+    <div class="site-footer site-footer-dark">
+      <span>&copy; 2026 CGA.</span>
+      <button class="footer-link" onclick="showView('about')">About us</button>
+      <span class="footer-sep">·</span>
+      <button class="footer-link" onclick="showView('legal')">Privacy &amp; Terms</button>
+      <span class="footer-sep">·</span>
+      <a class="footer-link" href="mailto:hello@cga.app">hello@cga.app</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== ABOUT US ===================== -->
+<div id="view-about" class="view">
+  <div class="auth-wrap">
+    <div class="auth-card about-card">
+      <button class="back-link" onclick="showView(previousView)">&larr; Back</button>
+      <div class="logo-row"><span class="brand-icon"></span><span class="brand-name">CGA</span></div>
+      <h1 class="auth-title">About us</h1>
+      <p class="about-p">
+        CGA was founded on a simple belief: farmers are the backbone of this
+        country, and they deserve tools that match the seriousness of the work they do. We build
+        soil intelligence software that turns a handful of dirt into a clear, actionable picture —
+        pH, nutrients, texture, and a plain-language recommendation, without a lab technician or a
+        degree in agronomy required.
+      </p>
+      <h2 class="about-h2">What we do</h2>
+      <p class="about-p">
+        Every grower who joins completes a short onboarding questionnaire about their crop, soil,
+        and climate. From there, CGA generates a CGA Result: a full soil
+        health snapshot covering macronutrients (N-P-K), micronutrients, secondary nutrients,
+        organic matter, cation exchange capacity, and soil texture — plus one clear recommendation
+        for what to do next.
+      </p>
+      <h2 class="about-h2">Our approach</h2>
+      <p class="about-p">
+        We favor plain language over jargon, one clear recommendation over a wall of numbers, and
+        steady, incremental improvement over guesswork. This demo generates readings from your
+        onboarding answers as a working preview of the product; the same engine is built to plug
+        directly into real soil sensors and lab reports as our sensor network expands.
+      </p>
+      <h2 class="about-h2">Get in touch</h2>
+      <p class="about-p">
+        Based in Afar, Ethiopia, and working with growers across the Horn of Africa.<br>
+        Email <a href="mailto:hello@cga.app">hello@cga.app</a>
+        — we read every message.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PRIVACY POLICY & TERMS ===================== -->
+<div id="view-legal" class="view">
+  <div class="auth-wrap">
+    <div class="auth-card about-card">
+      <button class="back-link" onclick="showView(previousView)">&larr; Back</button>
+      <div class="logo-row"><span class="brand-icon"></span><span class="brand-name">CGA</span></div>
+      <div class="legal-tabs">
+        <button class="legal-tab" onclick="document.getElementById('legal-privacy').scrollIntoView({behavior:'smooth'})">Privacy Policy</button>
+        <button class="legal-tab" onclick="document.getElementById('legal-terms').scrollIntoView({behavior:'smooth'})">Terms &amp; Conditions</button>
+      </div>
+
+      <h1 class="auth-title" id="legal-privacy">Privacy Policy</h1>
+      <p class="about-p">Last updated 2026. This explains, in plain language, what CGA collects and how it's used.</p>
+      <h2 class="about-h2">What we collect</h2>
+      <p class="about-p">
+        When you create an account, we ask for your email address, phone number, and a password.
+        When you complete onboarding, we ask about your crop, soil, and climate so we can tailor
+        your CGA Result.
+      </p>
+      <h2 class="about-h2">How this demo stores data</h2>
+      <p class="about-p">
+        This preview runs entirely in your browser tab: everything you enter is held in memory for
+        the session only and is never sent to a server or stored permanently. Refreshing the page
+        or closing the tab clears it. Our production system stores accounts and readings in an
+        encrypted database instead.
+      </p>
+      <h2 class="about-h2">How we'd use it in production</h2>
+      <p class="about-p">
+        Account details are used only to run your account — log you in, save your onboarding
+        answers, and show your soil history — never sold to advertisers or third parties. Crop and
+        soil answers are used to generate your CGA Result and improve our recommendation engine.
+      </p>
+      <h2 class="about-h2">Your rights</h2>
+      <p class="about-p">
+        You can ask us to access, correct, or delete your data at any time by emailing
+        <a href="mailto:hello@cga.app">hello@cga.app</a>.
+      </p>
+      <h2 class="about-h2">Contact</h2>
+      <p class="about-p">Questions about this policy? Email <a href="mailto:hello@cga.app">hello@cga.app</a>.</p>
+
+      <h1 class="auth-title" id="legal-terms" style="margin-top:36px;">Terms &amp; Conditions</h1>
+      <h2 class="about-h2">Using CGA</h2>
+      <p class="about-p">
+        By creating an account, you agree to use CGA for its intended purpose — getting soil and
+        crop guidance for your own farm or fields — and to provide accurate information during
+        signup and onboarding.
+      </p>
+      <h2 class="about-h2">This is a preview</h2>
+      <p class="about-p">
+        This site is a working demo. Soil readings shown are generated from your onboarding
+        answers as a realistic preview, not a certified lab analysis. Do not make irreversible
+        financial or agronomic decisions based solely on this demo without a follow-up lab test.
+      </p>
+      <h2 class="about-h2">No warranty</h2>
+      <p class="about-p">
+        CGA is provided "as is," without warranties of any kind. We work hard to keep
+        recommendations accurate and useful, but we don't guarantee specific crop outcomes.
+      </p>
+      <h2 class="about-h2">Changes</h2>
+      <p class="about-p">We may update these terms as the product evolves. Continued use after a change means you accept the updated terms.</p>
+      <h2 class="about-h2">Contact</h2>
+      <p class="about-p">Questions? Email <a href="mailto:hello@cga.app">hello@cga.app</a>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SIGN UP ===================== -->
+<div id="view-signup" class="view">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <button class="back-link" onclick="showView('welcome')">&larr; Back</button>
+      <div class="logo-row"><span class="brand-icon"></span><span class="brand-name">CGA</span></div>
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-sub">Set up your account to start monitoring your soil.</p>
+      <form id="signup-form" onsubmit="return handleSignup(event)">
+        <div class="field">
+          <label for="su-email">Email address</label>
+          <input id="su-email" type="email" placeholder="you@farm.com" required>
+        </div>
+        <div class="field">
+          <label for="su-phone">Phone number</label>
+          <input id="su-phone" type="tel" placeholder="+254 700 000 000" required>
+        </div>
+        <div class="field">
+          <label for="su-password">Password</label>
+          <input id="su-password" type="password" placeholder="At least 8 characters" minlength="8" required>
+          <div class="field-error" id="su-error">Please fill in all fields (password 8+ characters).</div>
+        </div>
+        <div class="field field-checkbox">
+          <label class="checkbox-label" for="su-agree">
+            <input type="checkbox" id="su-agree" required>
+            <span>I have read and agree to the <button type="button" class="link-inline" onclick="showView('legal')">Terms &amp; Conditions</button> and <button type="button" class="link-inline" onclick="showView('legal')">Privacy Policy</button>.</span>
+          </label>
+          <div class="field-error" id="su-agree-error">You need to agree to the Terms &amp; Conditions and Privacy Policy to create an account.</div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Create account</button>
+      </form>
+      <p class="form-footer">Already have an account? <button class="btn-link" onclick="showView('login')">Log in</button></p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== LOG IN ===================== -->
+<div id="view-login" class="view">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <button class="back-link" onclick="showView('welcome')">&larr; Back</button>
+      <div class="logo-row"><span class="brand-icon"></span><span class="brand-name">CGA</span></div>
+      <h1 class="auth-title">Welcome back</h1>
+      <p class="auth-sub">Log in to view your soil dashboard.</p>
+      <form id="login-form" onsubmit="return handleLogin(event)">
+        <div class="field">
+          <label for="li-email">Email address</label>
+          <input id="li-email" type="email" placeholder="you@farm.com" required>
+        </div>
+        <div class="field">
+          <label for="li-password">Password</label>
+          <input id="li-password" type="password" placeholder="Your password" required>
+          <div class="field-error" id="li-error">We couldn't find that account — try creating one.</div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Log in</button>
+      </form>
+      <p class="consent-text">By logging in, you agree to our <button type="button" class="link-inline" onclick="showView('legal')">Terms &amp; Conditions</button> and <button type="button" class="link-inline" onclick="showView('legal')">Privacy Policy</button>.</p>
+      <p class="form-footer">New here? <button class="btn-link" onclick="showView('signup')">Create an account</button></p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== ONBOARDING QUESTIONNAIRE ===================== -->
+<div id="view-onboarding" class="view">
+  <div class="onboard-wrap">
+    <div class="onboard-shell">
+      <div class="onboard-header">
+        <span style="font-size:24px;">🌾</span>
+        <h1>Tell us about your field</h1>
+        <p>A quick, one-time setup so CGA can tailor your soil readings.</p>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:33.3%"></div></div>
+
+      <!-- Step 1: Crop type -->
+      <div class="onboard-step active" id="step-1">
+        <div class="step-card">
+          <h2>Crop type</h2>
+          <p class="step-desc">Leafy greens, grains, and fruiting crops have very different nitrogen needs.</p>
+          <div class="option-grid" id="crop-options">
+            <div class="option-card" data-value="leafy" onclick="selectOption('crop','leafy',this)">
+              <span class="opt-icon">🥬</span>
+              <span class="opt-label">Leafy greens</span>
+              <span class="opt-note">High N demand</span>
+            </div>
+            <div class="option-card" data-value="grains" onclick="selectOption('crop','grains',this)">
+              <span class="opt-icon">🌾</span>
+              <span class="opt-label">Grains</span>
+              <span class="opt-note">Moderate, staged N</span>
+            </div>
+            <div class="option-card" data-value="fruiting" onclick="selectOption('crop','fruiting',this)">
+              <span class="opt-icon">🍅</span>
+              <span class="opt-label">Fruiting crops</span>
+              <span class="opt-note">P &amp; K focused</span>
+            </div>
+          </div>
+          <div class="step-nav">
+            <button class="btn btn-primary" style="flex:1" onclick="nextStep(1)">Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Soil type -->
+      <div class="onboard-step" id="step-2">
+        <div class="step-card">
+          <h2>Soil type</h2>
+          <p class="step-desc">Sand vs. clay, organic matter level, pH, and drainage all shape how your soil behaves.</p>
+          <div class="field">
+            <label for="soil-texture">Dominant soil texture</label>
+            <select id="soil-texture">
+              <option value="sand">Sandy</option>
+              <option value="loam" selected>Loam (balanced)</option>
+              <option value="clay">Clay</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="soil-organic">Organic matter level</label>
+            <select id="soil-organic">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="soil-ph">Known soil pH (if you have it — otherwise leave as-is)</label>
+            <select id="soil-ph">
+              <option value="acidic">Acidic (below 6.0)</option>
+              <option value="neutral" selected>Neutral (6.0–7.5)</option>
+              <option value="alkaline">Alkaline (above 7.5)</option>
+              <option value="unknown">Not sure — test for me</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="soil-drainage">Drainage</label>
+            <select id="soil-drainage">
+              <option value="poor">Poor — water pools after rain</option>
+              <option value="moderate" selected>Moderate</option>
+              <option value="good">Good — drains quickly</option>
+            </select>
+          </div>
+          <div class="step-nav">
+            <button class="btn btn-secondary" onclick="prevStep(2)">Back</button>
+            <button class="btn btn-primary" onclick="nextStep(2)">Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Climate & water -->
+      <div class="onboard-step" id="step-3">
+        <div class="step-card">
+          <h2>Climate &amp; water</h2>
+          <p class="step-desc">Rainfall pattern, evapotranspiration, and heat determine irrigation and nutrient timing.</p>
+          <div class="weather-panel" id="weather-panel">
+            <div class="weather-panel-head">
+              <span>📍 Live weather — Afar, Ethiopia</span>
+              <button type="button" class="btn-link" onclick="loadLiveWeather()">Refresh</button>
+            </div>
+            <div id="weather-panel-body">
+              <p class="weather-status" id="weather-status">Loading current conditions…</p>
+            </div>
+          </div>
+          <div class="field">
+            <label for="climate-rainfall">Rainfall pattern</label>
+            <select id="climate-rainfall">
+              <option value="low">Low / dry season</option>
+              <option value="seasonal" selected>Seasonal / moderate</option>
+              <option value="high">High / frequent rain</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="climate-et">Evapotranspiration</label>
+            <select id="climate-et">
+              <option value="low">Low</option>
+              <option value="moderate" selected>Moderate</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="climate-heat">Heat exposure</label>
+            <select id="climate-heat">
+              <option value="mild">Mild</option>
+              <option value="warm" selected>Warm</option>
+              <option value="hot">Hot / extreme</option>
+            </select>
+          </div>
+          <div class="step-nav">
+            <button class="btn btn-secondary" onclick="prevStep(3)">Back</button>
+            <button class="btn btn-primary" onclick="submitOnboarding()">See my soil results</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== DASHBOARD ===================== -->
+<div id="view-dashboard" class="view">
+  <div class="dash-header">
+    <div class="logo-row">
+      <span class="brand-icon"></span>
+      <span class="brand-name">CGA</span>
+    </div>
+    <div class="dash-user">
+      <button class="btn-link" onclick="showView('about')">About us</button>
+      <span class="greet">Signed in as <strong id="dash-user-email">you@farm.com</strong></span>
+      <button class="btn btn-secondary" onclick="logout()">Log out</button>
+    </div>
+  </div>
+
+  <div class="dash-body">
+    <div class="hero-card">
+      <div>
+        <div class="hero-label">CGA Result</div>
+        <div class="hero-figure" id="hero-score">78</div>
+        <div class="hero-status" id="hero-status">Your field is in good shape overall, with a couple of nutrients worth watching.</div>
+      </div>
+      <div class="hero-meta">
+        <div id="hero-crop">Crop: Leafy greens</div>
+        <div id="hero-updated">Updated just now</div>
+        <div style="margin-top:6px; opacity:0.8;">Demo readings — connect a soil sensor for live data</div>
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <!-- Soil pH -->
+      <div class="card">
+        <h3>Soil pH</h3>
+        <p class="card-sub">Acidity or alkalinity — affects nutrient uptake</p>
+        <div class="ph-gauge-wrap">
+          <div class="ph-scale">
+            <div class="ph-track">
+              <div class="ph-optimal-zone" id="ph-optimal-zone"></div>
+            </div>
+            <div class="ph-marker" id="ph-marker" data-val="6.4"></div>
+          </div>
+          <div class="ph-labels"><span>0</span><span>7</span><span>14</span></div>
+        </div>
+        <p class="ph-caption" id="ph-caption">Most plants prefer pH 6.0–7.5. Your soil sits in the optimal range.</p>
+      </div>
+
+      <!-- Macronutrients -->
+      <div class="card">
+        <h3>Macronutrients (N-P-K)</h3>
+        <p class="card-sub">The big three — leaf growth, roots &amp; fruit, stress resistance</p>
+        <div id="npk-meters"></div>
+      </div>
+
+      <!-- Micronutrients -->
+      <div class="card">
+        <h3>Micronutrients</h3>
+        <p class="card-sub">Iron, zinc, manganese, copper, boron</p>
+        <div id="micro-meters"></div>
+      </div>
+
+      <!-- Secondary nutrients -->
+      <div class="card">
+        <h3>Secondary nutrients</h3>
+        <p class="card-sub">Calcium, magnesium, sulfur</p>
+        <div id="secondary-meters"></div>
+      </div>
+
+      <!-- Organic matter -->
+      <div class="card">
+        <div class="stat-tile-label">Organic matter</div>
+        <div class="stat-tile-value" id="organic-value">4.2%</div>
+        <div class="status-chip" id="organic-chip"><span class="status-dot"></span>Medium</div>
+        <p class="stat-tile-note">Feeds microbial life and improves water retention. 3–6% is a healthy target for most row crops.</p>
+      </div>
+
+      <!-- CEC -->
+      <div class="card">
+        <h3>Cation exchange capacity (CEC)</h3>
+        <p class="card-sub">How well your soil holds onto nutrients</p>
+        <div class="meter-row">
+          <div class="meter-top"><span class="meter-name">CEC</span><span class="meter-value" id="cec-value">14.2 meq/100g</span></div>
+          <div class="meter-track"><div class="meter-fill" id="cec-fill" style="width:56%"></div></div>
+        </div>
+        <div class="status-chip" id="cec-chip"><span class="status-dot"></span>Moderate retention</div>
+      </div>
+
+      <!-- Texture & structure -->
+      <div class="card">
+        <h3>Soil texture &amp; structure</h3>
+        <p class="card-sub">% sand, silt, clay in your sample</p>
+        <div class="texture-bar" id="texture-bar"></div>
+        <div class="texture-legend" id="texture-legend"></div>
+        <div class="structure-note" id="structure-note">Loam soils are well balanced — good drainage with solid nutrient and water retention.</div>
+      </div>
+    </div>
+
+    <div class="card rec-card">
+      <h3>Recommendation for your crop</h3>
+      <p id="rec-text">Based on your leafy greens and current nitrogen levels, plan a light nitrogen top-up early in the growth cycle and re-test in 4–6 weeks.</p>
+    </div>
+
+    <div class="card tips-card">
+      <h3>How to get accurate soil test results</h3>
+      <ul class="tips-list">
+        <li><span class="tip-num">1</span>Take multiple samples from different spots in the field and mix them together.</li>
+        <li><span class="tip-num">2</span>Avoid unusual areas — near roads, compost piles, fences, or animal droppings.</li>
+        <li><span class="tip-num">3</span>Sample 6–8 inches deep for most gardens and row crops.</li>
+        <li><span class="tip-num">4</span>Use clean tools each time to avoid cross-contamination between samples.</li>
+      </ul>
+    </div>
+
+    <div class="site-footer">
+      <span>&copy; 2026 CGA.</span>
+      <button class="footer-link" onclick="showView('about')">About us</button>
+      <span class="footer-sep">·</span>
+      <button class="footer-link" onclick="showView('legal')">Privacy &amp; Terms</button>
+      <span class="footer-sep">·</span>
+      <a class="footer-link" href="mailto:hello@cga.app">hello@cga.app</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- In-memory state (no localStorage per platform restrictions) ----------
+const appState = {
+  users: [],           // {email, phone, password}
+  currentUser: null,
+  onboarded: {},       // email -> true once questionnaire completed
+  answers: { crop: null },
+  soil: null
+};
+
+// The CGA logomark — injected into every ".brand-icon" placeholder so it
+// only has to be defined once instead of repeated inline at each occurrence.
+const LOGO_SVG = '<svg viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">' +
+  '<rect width="110" height="110" rx="26" fill="#eaf4ec"/>' +
+  '<path d="M20 78 L90 78" stroke="#1c4d2b" stroke-width="5" stroke-linecap="round"/>' +
+  '<path d="M40 78 L40 52" stroke="#2f7d46" stroke-width="6" stroke-linecap="round"/>' +
+  '<path d="M40 56 C 40 44, 30 38, 20 37 C 21 49, 29 56, 40 56 Z" fill="#7ec090"/>' +
+  '<path d="M40 56 C 40 44, 50 38, 60 37 C 59 49, 51 56, 40 56 Z" fill="#4b9d68"/>' +
+  '<path d="M68 78 L68 40" stroke="#1c4d2b" stroke-width="6" stroke-linecap="round"/>' +
+  '<path d="M68 45 C 68 30, 55 22, 42 20 C 43 35, 54 44, 68 45 Z" fill="#2f7d46"/>' +
+  '<path d="M68 45 C 68 30, 81 22, 94 20 C 93 35, 82 44, 68 45 Z" fill="#1c4d2b"/>' +
+  '</svg>';
+document.querySelectorAll('.brand-icon').forEach(el => { el.innerHTML = LOGO_SVG; });
+
+// Fade-in-on-scroll for the cover page's ".reveal" elements.
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// Tracks the view active just before this one, so "About us" (reachable from
+// more than one place) can send the visitor back to wherever they came from.
+let previousView = 'cover';
+
+function showView(name) {
+  const current = document.querySelector('.view.active');
+  if (current) {
+    const currentName = current.id.replace(/^view-/, '');
+    if (currentName !== name) previousView = currentName;
+  }
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// Cover nav's "Home" link: smooth-scroll to the top if already on the cover
+// page, otherwise switch back to it first.
+function goHome() {
+  if (document.getElementById('view-cover').classList.contains('active')) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    showView('cover');
+  }
+}
+
+// The global nav's "Features"/"Pricing" links jump to a section that only
+// exists inside the cover page. If we're somewhere else (dashboard, About,
+// onboarding...) switch back to the cover first, then scroll once it's
+// actually on screen.
+function goToSection(id) {
+  const scrollToIt = () => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+  if (!document.getElementById('view-cover').classList.contains('active')) {
+    showView('cover');
+    requestAnimationFrame(() => requestAnimationFrame(scrollToIt));
+  } else {
+    scrollToIt();
+  }
+}
+
+// ---------- Auth ----------
+function handleSignup(e) {
+  e.preventDefault();
+  const email = document.getElementById('su-email').value.trim();
+  const phone = document.getElementById('su-phone').value.trim();
+  const password = document.getElementById('su-password').value;
+  const errorEl = document.getElementById('su-error');
+  const agreeBox = document.getElementById('su-agree');
+  const agreeField = agreeBox.closest('.field-checkbox');
+  const agreeError = document.getElementById('su-agree-error');
+
+  if (!email || !phone || password.length < 8) {
+    errorEl.style.display = 'block';
+    return false;
+  }
+  errorEl.style.display = 'none';
+
+  // Require an explicit, logged agreement to the Terms & Conditions and
+  // Privacy Policy before an account can be created — not just a passive
+  // "by continuing you agree" line.
+  if (!agreeBox.checked) {
+    agreeError.style.display = 'block';
+    agreeField.classList.add('has-error');
+    agreeBox.focus();
+    return false;
+  }
+  agreeError.style.display = 'none';
+  agreeField.classList.remove('has-error');
+
+  appState.users.push({
+    email, phone, password,
+    agreedToTerms: true,
+    agreedAt: new Date().toISOString(),
+  });
+  appState.currentUser = email;
+  document.getElementById('dash-user-email').textContent = email;
+  showView('onboarding');
+  return false;
+}
+
+function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('li-email').value.trim();
+  const password = document.getElementById('li-password').value;
+  const errorEl = document.getElementById('li-error');
+
+  const user = appState.users.find(u => u.email === email && u.password === password);
+  if (!user) {
+    errorEl.style.display = 'block';
+    return false;
+  }
+  errorEl.style.display = 'none';
+  appState.currentUser = email;
+  document.getElementById('dash-user-email').textContent = email;
+
+  if (appState.onboarded[email]) {
+    renderDashboard();
+    showView('dashboard');
+  } else {
+    showView('onboarding');
+  }
+  return false;
+}
+
+function logout() {
+  appState.currentUser = null;
+  showView('cover');
+}
+
+// ---------- Onboarding ----------
+function selectOption(group, value, el) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  appState.answers[group] = value;
+}
+
+function nextStep(current) {
+  if (current === 1 && !appState.answers.crop) {
+    alert('Please choose a crop type to continue.');
+    return;
+  }
+  document.getElementById('step-' + current).classList.remove('active');
+  document.getElementById('step-' + (current + 1)).classList.add('active');
+  document.getElementById('progress-fill').style.width = (((current + 1) / 3) * 100) + '%';
+  if (current === 2) loadLiveWeather();
+}
+
+function prevStep(current) {
+  document.getElementById('step-' + current).classList.remove('active');
+  document.getElementById('step-' + (current - 1)).classList.add('active');
+  document.getElementById('progress-fill').style.width = (((current - 1) / 3) * 100) + '%';
+}
+
+function submitOnboarding() {
+  appState.answers.texture = document.getElementById('soil-texture').value;
+  appState.answers.organic = document.getElementById('soil-organic').value;
+  appState.answers.ph = document.getElementById('soil-ph').value;
+  appState.answers.drainage = document.getElementById('soil-drainage').value;
+  appState.answers.rainfall = document.getElementById('climate-rainfall').value;
+  appState.answers.et = document.getElementById('climate-et').value;
+  appState.answers.heat = document.getElementById('climate-heat').value;
+
+  if (appState.currentUser) appState.onboarded[appState.currentUser] = true;
+
+  appState.soil = generateSoilReadings(appState.answers);
+  renderDashboard();
+  showView('dashboard');
+}
+
+// ---------- Live weather (Afar, Ethiopia) ----------
+// CGA is based in Afar, Ethiopia, so the climate & water step pulls real
+// current conditions for that location from Open-Meteo (a free, no-API-key
+// weather service) instead of asking growers to guess. The dropdowns are
+// pre-filled from live data but stay fully editable.
+const FARM_LOCATION = { name: 'Afar, Ethiopia', lat: 11.79, lon: 41.01 };
+let weatherLoading = false;
+
+async function fetchAfarWeather() {
+  const { lat, lon } = FARM_LOCATION;
+  const url = 'https://api.open-meteo.com/v1/forecast' +
+    '?latitude=' + lat + '&longitude=' + lon +
+    '&current=temperature_2m,precipitation' +
+    '&daily=precipitation_sum,et0_fao_evapotranspiration,temperature_2m_max' +
+    '&past_days=14&forecast_days=1&timezone=auto';
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) throw new Error('Weather service returned ' + res.status);
+    return await res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// Turns raw forecast numbers into the same low/seasonal/high-style categories
+// the dropdowns use, so live data slots into the existing questionnaire and
+// scoring logic without changing its shape.
+function classifyWeather(data) {
+  const daily = data.daily || {};
+  const nums = arr => (arr || []).filter(v => v !== null && v !== undefined);
+  const sum = arr => arr.reduce((a, b) => a + b, 0);
+  const avg = arr => arr.length ? sum(arr) / arr.length : null;
+
+  const precip = nums(daily.precipitation_sum);
+  const et = nums(daily.et0_fao_evapotranspiration);
+  const tmax = nums(daily.temperature_2m_max);
+
+  const precipTotal = sum(precip);
+  const etAvg = avg(et);
+  const tmaxAvg = avg(tmax);
+
+  let rainfall = 'seasonal';
+  if (precipTotal < 5) rainfall = 'low';
+  else if (precipTotal > 40) rainfall = 'high';
+
+  let etLevel = 'moderate';
+  if (etAvg !== null) {
+    if (etAvg < 3) etLevel = 'low';
+    else if (etAvg > 6) etLevel = 'high';
+  }
+
+  let heat = 'warm';
+  if (tmaxAvg !== null) {
+    if (tmaxAvg < 25) heat = 'mild';
+    else if (tmaxAvg > 35) heat = 'hot';
+  }
+
+  return {
+    rainfall, et: etLevel, heat,
+    precipTotal: Math.round(precipTotal),
+    etAvg: etAvg !== null ? Number(etAvg.toFixed(1)) : null,
+    tmaxAvg: tmaxAvg !== null ? Number(tmaxAvg.toFixed(1)) : null,
+    currentTemp: data.current ? data.current.temperature_2m : null,
+  };
+}
+
+async function loadLiveWeather() {
+  if (weatherLoading) return;
+  weatherLoading = true;
+  const body = document.getElementById('weather-panel-body');
+  body.innerHTML = '<p class="weather-status">Loading current conditions for Afar, Ethiopia…</p>';
+  try {
+    const data = await fetchAfarWeather();
+    const w = classifyWeather(data);
+    document.getElementById('climate-rainfall').value = w.rainfall;
+    document.getElementById('climate-et').value = w.et;
+    document.getElementById('climate-heat').value = w.heat;
+    appState.liveWeather = w;
+    body.innerHTML =
+      '<div class="weather-readout">' +
+        '<div class="w-item"><span class="w-label">Now</span><span class="w-value">' + (w.currentTemp != null ? w.currentTemp + '°C' : '—') + '</span></div>' +
+        '<div class="w-item"><span class="w-label">Rain (14d)</span><span class="w-value">' + w.precipTotal + ' mm</span></div>' +
+        '<div class="w-item"><span class="w-label">Evapotranspiration</span><span class="w-value">' + (w.etAvg ?? '—') + ' mm/day</span></div>' +
+        '<div class="w-item"><span class="w-label">Max temp (avg)</span><span class="w-value">' + (w.tmaxAvg ?? '—') + '°C</span></div>' +
+      '</div>' +
+      '<p class="weather-note">Fields below are set from these live conditions for ' + FARM_LOCATION.name + ' — feel free to adjust before continuing.</p>';
+  } catch (err) {
+    body.innerHTML = '<p class="weather-status weather-error">Couldn’t reach live weather right now — please choose the conditions below manually.</p>';
+  } finally {
+    weatherLoading = false;
+  }
+}
+
+// ---------- Mock soil data generation ----------
+function rand(min, max) { return Math.random() * (max - min) + min; }
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+function generateSoilReadings(answers) {
+  // pH baseline nudged by declared range
+  let phBase = 6.7;
+  if (answers.ph === 'acidic') phBase = 5.6;
+  if (answers.ph === 'alkaline') phBase = 7.9;
+  const ph = clamp(phBase + rand(-0.3, 0.3), 4.5, 9.0);
+
+  // Texture composition. Round sand/silt first, then derive clay as the exact
+  // remainder — rounding all three independently can drift the sum off 100.
+  let sand, silt;
+  if (answers.texture === 'sand') { sand = rand(55, 70); silt = rand(15, 25); }
+  else if (answers.texture === 'clay') { sand = rand(15, 25); silt = rand(20, 30); }
+  else { sand = rand(30, 45); silt = rand(25, 35); }
+  const sandPct = Math.round(sand);
+  const siltPct = Math.round(silt);
+  const clayPct = 100 - sandPct - siltPct;
+
+  const organicMap = { low: rand(1, 2.5), medium: rand(2.5, 4.5), high: rand(4.5, 7) };
+  let organic = organicMap[answers.organic] ?? rand(2.5, 4.5);
+
+  const cecBase = answers.texture === 'clay' ? rand(18, 26) : answers.texture === 'sand' ? rand(4, 10) : rand(10, 18);
+
+  // Climate & water nudges — arid, low-rainfall conditions (like Afar's) mean
+  // less leaching but also little natural nitrogen replenishment, while high
+  // heat and evapotranspiration speed up organic matter breakdown. These
+  // answers come from the live-weather panel in step 3 (or a manual override),
+  // so real conditions for the farm's location actually move the result.
+  let nShift = 0;
+  if (answers.rainfall === 'low') nShift -= 8;
+  if (answers.rainfall === 'high') nShift -= 6;
+  if (answers.et === 'high') nShift -= 6;
+  if (answers.heat === 'hot') organic -= 0.4;
+  if (answers.et === 'high') organic -= 0.3;
+  organic = clamp(organic, 0.5, 8);
+
+  return {
+    ph: Number(ph.toFixed(1)),
+    n: Math.round(clamp(rand(30, 90) + nShift, 5, 95)),
+    p: Math.round(rand(25, 85)),
+    k: Math.round(rand(30, 90)),
+    micro: {
+      iron: Math.round(rand(20, 90)),
+      zinc: Math.round(rand(20, 90)),
+      manganese: Math.round(rand(20, 90)),
+      copper: Math.round(rand(20, 90)),
+      boron: Math.round(rand(20, 90)),
+    },
+    secondary: {
+      calcium: Math.round(rand(30, 90)),
+      magnesium: Math.round(rand(30, 90)),
+      sulfur: Math.round(rand(30, 90)),
+    },
+    organic: Number(organic.toFixed(1)),
+    texture: { sand: sandPct, silt: siltPct, clay: clayPct },
+    cec: Number(cecBase.toFixed(1)),
+  };
+}
+
+function levelFor(value) {
+  if (value < 34) return { label: 'Low', color: 'var(--warning)' };
+  if (value < 67) return { label: 'Medium', color: 'var(--good)' };
+  return { label: 'High', color: 'var(--series-1)' };
+}
+
+function meterRowHtml(name, value) {
+  const lvl = levelFor(value);
+  return `<div class="meter-row">
+    <div class="meter-top"><span class="meter-name">${name}</span><span class="meter-value">${value}%</span></div>
+    <div class="meter-track"><div class="meter-fill" style="width:${value}%"></div></div>
+    <div class="status-chip"><span class="status-dot" style="background:${lvl.color}"></span>${lvl.label}</div>
+  </div>`;
+}
+
+const cropLabels = { leafy: 'Leafy greens', grains: 'Grains', fruiting: 'Fruiting crops' };
+
+function renderDashboard() {
+  const soil = appState.soil;
+  if (!soil) return;
+  const answers = appState.answers;
+
+  // Hero
+  const score = Math.round(
+    (levelScore(soil.n) + levelScore(soil.p) + levelScore(soil.k) + phScore(soil.ph) + Math.min(soil.organic / 6, 1) * 100) / 5
+  );
+  document.getElementById('hero-score').textContent = score;
+  document.getElementById('hero-crop').textContent = 'Crop: ' + (cropLabels[answers.crop] || '—');
+  document.getElementById('hero-updated').textContent = 'Updated just now';
+  document.getElementById('hero-status').textContent = score >= 75
+    ? 'Your field is in great shape — nutrient levels and pH are well balanced for your crop.'
+    : score >= 50
+      ? 'Your field is in good shape overall, with a couple of nutrients worth watching.'
+      : 'Several readings need attention before the next planting cycle — see recommendations below.';
+
+  // pH gauge (scale 0-14, optimal zone 6.0-7.5)
+  const scaleMin = 0, scaleMax = 14;
+  const toPct = v => ((v - scaleMin) / (scaleMax - scaleMin)) * 100;
+  document.getElementById('ph-optimal-zone').style.left = toPct(6.0) + '%';
+  document.getElementById('ph-optimal-zone').style.width = (toPct(7.5) - toPct(6.0)) + '%';
+  const marker = document.getElementById('ph-marker');
+  marker.style.left = toPct(soil.ph) + '%';
+  marker.setAttribute('data-val', soil.ph);
+  document.getElementById('ph-caption').textContent = (soil.ph >= 6.0 && soil.ph <= 7.5)
+    ? `Most plants prefer pH 6.0–7.5. Your soil (${soil.ph}) sits in the optimal range.`
+    : soil.ph < 6.0
+      ? `Most plants prefer pH 6.0–7.5. Your soil (${soil.ph}) is acidic — consider liming.`
+      : `Most plants prefer pH 6.0–7.5. Your soil (${soil.ph}) is alkaline — consider sulfur amendments.`;
+
+  // NPK
+  document.getElementById('npk-meters').innerHTML =
+    meterRowHtml('Nitrogen (N)', soil.n) +
+    meterRowHtml('Phosphorus (P)', soil.p) +
+    meterRowHtml('Potassium (K)', soil.k);
+
+  // Micronutrients
+  document.getElementById('micro-meters').innerHTML =
+    meterRowHtml('Iron', soil.micro.iron) +
+    meterRowHtml('Zinc', soil.micro.zinc) +
+    meterRowHtml('Manganese', soil.micro.manganese) +
+    meterRowHtml('Copper', soil.micro.copper) +
+    meterRowHtml('Boron', soil.micro.boron);
+
+  // Secondary
+  document.getElementById('secondary-meters').innerHTML =
+    meterRowHtml('Calcium', soil.secondary.calcium) +
+    meterRowHtml('Magnesium', soil.secondary.magnesium) +
+    meterRowHtml('Sulfur', soil.secondary.sulfur);
+
+  // Organic matter
+  document.getElementById('organic-value').textContent = soil.organic + '%';
+  const orgLvl = soil.organic < 2.5 ? { label: 'Low', color: 'var(--warning)' } : soil.organic < 4.5 ? { label: 'Medium', color: 'var(--good)' } : { label: 'High', color: 'var(--series-1)' };
+  document.getElementById('organic-chip').innerHTML = `<span class="status-dot" style="background:${orgLvl.color}"></span>${orgLvl.label}`;
+
+  // CEC
+  document.getElementById('cec-value').textContent = soil.cec + ' meq/100g';
+  document.getElementById('cec-fill').style.width = Math.min((soil.cec / 30) * 100, 100) + '%';
+  const cecLvl = soil.cec < 10 ? { label: 'Low retention', color: 'var(--warning)' } : soil.cec < 20 ? { label: 'Moderate retention', color: 'var(--good)' } : { label: 'High retention', color: 'var(--series-1)' };
+  document.getElementById('cec-chip').innerHTML = `<span class="status-dot" style="background:${cecLvl.color}"></span>${cecLvl.label}`;
+
+  // Texture bar
+  const segs = [
+    { label: 'Sand', value: soil.texture.sand, color: 'var(--series-1)' },
+    { label: 'Silt', value: soil.texture.silt, color: 'var(--series-2)' },
+    { label: 'Clay', value: soil.texture.clay, color: 'var(--series-3)' },
+  ];
+  document.getElementById('texture-bar').innerHTML = segs.map(s =>
+    `<div class="texture-seg" style="width:${s.value}%; background:${s.color};">${s.value >= 12 ? s.value + '%' : ''}</div>`
+  ).join('');
+  document.getElementById('texture-legend').innerHTML = segs.map(s =>
+    `<div class="lg-item"><span class="lg-swatch" style="background:${s.color}"></span>${s.label} ${s.value}%</div>`
+  ).join('');
+
+  let structureText;
+  if (soil.texture.sand >= 50) structureText = 'Sand-dominant: drains quickly and warms up fast in spring, but holds less water and fewer nutrients — plan more frequent, lighter irrigation and fertilizing.';
+  else if (soil.texture.clay >= 40) structureText = 'Clay-dominant: holds water and nutrients well but drains slowly and can compact — avoid working it wet and consider raised beds or added organic matter.';
+  else structureText = 'A balanced loam: good drainage alongside solid water and nutrient retention — generally the easiest texture to manage.';
+  document.getElementById('structure-note').textContent = structureText;
+
+  // Recommendation
+  const lowest = Object.entries({ Nitrogen: soil.n, Phosphorus: soil.p, Potassium: soil.k }).sort((a, b) => a[1] - b[1])[0];
+  const cropText = cropLabels[answers.crop] || 'your crop';
+  document.getElementById('rec-text').textContent =
+    `Based on your ${cropText.toLowerCase()} and current levels, ${lowest[0].toLowerCase()} (${lowest[1]}%) is your first priority — plan a targeted amendment and re-test in 4–6 weeks. Soil pH and organic matter both look ` +
+    (soil.ph >= 6.0 && soil.ph <= 7.5 ? 'on track, ' : 'worth adjusting, ') +
+    'so nutrients should absorb ' + (soil.ph >= 6.0 && soil.ph <= 7.5 ? 'efficiently once levels are corrected.' : 'better once pH is corrected.');
+}
+
+function levelScore(v) { return v; }
+function phScore(ph) {
+  if (ph >= 6.0 && ph <= 7.5) return 100;
+  const dist = ph < 6.0 ? (6.0 - ph) : (ph - 7.5);
+  return Math.max(0, 100 - dist * 40);
+}
+</script>
+</body>
+</html>
